@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClearllyFocus V3.01 - Flow State Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Breathing animation */
+        .breathing-ring {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+        
+        .breathing-ring::before,
+        .breathing-ring::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(139, 92, 246, 0.5);
+        }
+        
+        .breathing-ring::before {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            animation: breathe-in 19s infinite ease-in-out;
+        }
+        
+        .breathing-ring::after {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            animation: breathe-in 19s infinite ease-in-out 0.5s;
+        }
+        
+        @keyframes breathe-in {
+            0%, 100% { transform: scale(0.8); opacity: 0.3; }
+            21% { transform: scale(1.3); opacity: 0.8; } /* 4s inhale */
+            58% { transform: scale(1.3); opacity: 0.8; } /* 7s hold */
+            100% { transform: scale(0.8); opacity: 0.3; } /* 8s exhale */
+        }
+        
+        .breathing-text {
+            animation: breathe-text 19s infinite ease-in-out;
+        }
+        
+        @keyframes breathe-text {
+            0%, 100% { content: 'Exhale...'; }
+            0% { opacity: 0.5; }
+            5% { opacity: 1; }
+            21% { opacity: 1; }
+            22% { opacity: 0.5; }
+            58% { opacity: 0.5; }
+            63% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+        
+        /* Timer progress ring */
+        .timer-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .timer-ring-circle {
+            transition: stroke-dashoffset 1s linear;
+        }
+        
+        /* Custom range slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-track {
+            background: rgba(255, 255, 255, 0.1);
+            height: 6px;
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #8b5cf6;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+            transition: transform 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Noise type buttons */
+        .noise-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .noise-btn.active {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Zen mode */
+        .zen-mode .fade-in-zen {
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        .zen-mode .zen-persistent {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Pulse animation for active timer */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.6); }
+        }
+        
+        .timer-active {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+        
+        /* Streak flame */
+        @keyframes flame {
+            0%, 100% { transform: scale(1) rotate(-2deg); }
+            50% { transform: scale(1.1) rotate(2deg); }
+        }
+        
+        .streak-flame {
+            animation: flame 1s infinite ease-in-out;
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Background Particles -->
+    <div class="bg-particles" id="particles"></div>
+    
+    <!-- Main Container -->
+    <div class="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <!-- Header / Stats Bar -->
+        <div class="w-full max-w-md flex justify-between items-center mb-6 fade-in-zen transition-all" id="header-bar">
+            <div class="flex items-center gap-2">
+                <i data-lucide="brain" class="w-5 h-5 text-violet-400"></i>
+                <span class="text-sm font-medium text-violet-200">ClearllyFocus</span>
+                <span class="text-xs text-violet-400/60">V3.01</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Flow Streak -->
+                <div class="flex items-center gap-1 glass px-3 py-1 rounded-full">
+                    <i data-lucide="flame" class="w-4 h-4 text-orange-400 streak-flame"></i>
+                    <span class="text-sm font-semibold" id="streak-display">0</span>
+                    <span class="text-xs text-white/50">min</span>
+                </div>
+                <!-- Total Focus Time -->
+                <div class="flex items-center gap-1 glass px-3 py-1 rounded-full">
+                    <i data-lucide="clock" class="w-4 h-4 text-emerald-400"></i>
+                    <span class="text-sm font-semibold" id="total-focus-display">0</span>
+                    <span class="text-xs text-white/50">total</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ONE TASK LOCKER -->
+        <div class="w-full max-w-md mb-6 zen-persistent transition-all" id="task-section">
+            <div class="glass-strong rounded-2xl p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="target" class="w-4 h-4 text-violet-400"></i>
+                    <span class="text-xs uppercase tracking-wider text-violet-300">Your One Focus Task</span>
+                </div>
+                <input 
+                    type="text" 
+                    id="task-input"
+                    placeholder="What is your single most important task?"
+                    class="w-full bg-transparent text-lg font-medium placeholder-white/30 outline-none border-b border-white/10 pb-2 focus:border-violet-400 transition-colors"
+                >
+                <div id="task-display" class="hidden">
+                    <p class="text-lg font-medium text-white" id="task-text"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BREATHING PACER (Hidden by default) -->
+        <div class="w-full max-w-md mb-6 hidden fade-in-zen transition-all" id="breathing-section">
+            <div class="glass rounded-2xl p-6 flex flex-col items-center">
+                <div class="breathing-ring flex items-center justify-center mb-4">
+                    <div class="text-center">
+                        <p class="text-2xl font-light text-violet-200" id="breath-text">Inhale...</p>
+                        <p class="text-sm text-white/50 mt-1">4-7-8 Breathing</p>
+                    </div>
+                </div>
+                <button id="stop-breathing" class="text-sm text-white/50 hover:text-white transition-colors">
+                    Skip breathing
+                </button>
+            </div>
+        </div>
+        
+        <!-- MAIN TIMER -->
+        <div class="w-full max-w-md mb-6 zen-persistent transition-all">
+            <div class="glass rounded-3xl p-8 flex flex-col items-center timer-active" id="timer-container">
+                <!-- Timer Display -->
+                <div class="relative mb-6">
+                    <svg class="timer-ring w-48 h-48" viewBox="0 0 120 120">
+                        <circle 
+                            cx="60" cy="60" r="54" 
+                            fill="none" 
+                            stroke="rgba(255,255,255,0.1)" 
+                            stroke-width="4"
+                        />
+                        <circle 
+                            id="timer-progress"
+                            cx="60" cy="60" r="54" 
+                            fill="none" 
+                            stroke="url(#gradient)" 
+                            stroke-width="4"
+                            stroke-linecap="round"
+                            stroke-dasharray="339.292"
+                            stroke-dashoffset="0"
+                            class="timer-ring-circle"
+                        />
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#8b5cf6" />
+                                <stop offset="100%" stop-color="#ec4899" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-5xl font-bold tracking-tight" id="timer-display">25:00</span>
+                        <span class="text-sm text-white/50 mt-1" id="timer-mode">Focus</span>
+                    </div>
+                </div>
+                
+                <!-- Timer Controls -->
+                <div class="flex items-center gap-4 mb-4">
+                    <button id="timer-toggle" class="w-16 h-16 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-violet-500/30">
+                        <i data-lucide="play" class="w-7 h-7 ml-1" id="play-icon"></i>
+                        <i data-lucide="pause" class="w-7 h-7 hidden" id="pause-icon"></i>
+                    </button>
+                    <button id="timer-reset" class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-colors">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <!-- Timer Presets -->
+                <div class="flex gap-2">
+                    <button class="timer-preset px-3 py-1 rounded-full text-xs glass hover:bg-white/10 transition-colors active" data-minutes="25" data-break="5">
+                        25/5
+                    </button>
+                    <button class="timer-preset px-3 py-1 rounded-full text-xs glass hover:bg-white/10 transition-colors" data-minutes="50" data-break="10">
+                        50/10
+                    </button>
+                    <button class="timer-preset px-3 py-1 rounded-full text-xs glass hover:bg-white/10 transition-colors" data-minutes="45" data-break="15">
+                        45/15
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AUDIO CONTROLS -->
+        <div class="w-full max-w-md mb-6 fade-in-zen transition-all" id="audio-section">
+            <div class="glass rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="volume-2" class="w-4 h-4 text-violet-400"></i>
+                        <span class="text-sm font-medium">Ambient Soundscape</span>
+                    </div>
+                    <button id="mute-toggle" class="text-white/50 hover:text-white transition-colors">
+                        <i data-lucide="volume-x" class="w-5 h-5 hidden" id="mute-icon"></i>
+                        <i data-lucide="volume-2" class="w-5 h-5" id="unmute-icon"></i>
+                    </button>
+                </div>
+                
+                <!-- Noise Type Selection -->
+                <div class="grid grid-cols-4 gap-2 mb-4">
+                    <button class="noise-btn glass rounded-xl p-3 flex flex-col items-center gap-1" data-noise="brown">
+                        <i data-lucide="waves" class="w-5 h-5"></i>
+                        <span class="text-xs">Brown</span>
+                    </button>
+                    <button class="noise-btn glass rounded-xl p-3 flex flex-col items-center gap-" data-noise="pink">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                        <span class="text-xs">Pink</span>
+                    </button>
+                    <button class="noise-btn glass rounded-xl p-3 flex flex-col items-center gap-1" data-noise="white">
+                        <i data-lucide="radio" class="w-5 h-5"></i>
+                        <span class="text-xs">White</span>
+                    </button>
+                    <button class="noise-btn glass rounded-xl p-3 flex flex-col items-center gap-1" data-noise="off">
+                        <i data-lucide="volume-x" class="w-5 h-5"></i>
+                        <span class="text-xs">Off</span>
+                    </button>
+                </div>
+                
+                <!-- Volume Slider -->
+                <div class="flex items-center gap-3 mb-4">
+                    <i data-lucide="volume-1" class="w-4 h-4 text-white/50"></i>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" class="flex-1">
+                    <i data-lucide="volume-2" class="w-4 h-4 text-white/50"></i>
+                </div>
+                
+                <!-- Binaural Beats Toggle -->
+                <div class="glass rounded-xl p-3 mb-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                            <span class="text-sm">Deep Flow (Binaural Beats)</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="binaural-toggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
+                        </label>
+                    </div>
+                    <p class="text-xs text-white/50">10Hz Alpha waves for relaxed focus</p>
+                </div>
+                
+                <!-- Beta Mode Toggle (for intense focus) -->
+                <div class="glass rounded-xl p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="bolt" class="w-4 h-4 text-cyan-400"></i>
+                            <span class="text-sm">High Intensity (Beta)</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="beta-toggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                        </label>
+                    </div>
+                    <p class="text-xs text-white/50">15-20Hz Beta waves for intense concentration</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ZEN MODE TOGGLE -->
+        <div class="flex items-center gap-3 fade-in-zen transition-all">
+            <button id="zen-toggle" class="flex items-center gap-2 glass px-4 py-2 rounded-full hover:bg-white/10 transition-colors">
+                <i data-lucide="eye-off" class="w-4 h-4"></i>
+                <span class="text-sm">Zen Mode</span>
+            </button>
+            <button id="breathe-toggle" class="flex items-center gap-2 glass px-4 py-2 rounded-full hover:bg-white/10 transition-colors">
+                <i data-lucide="wind" class="w-4 h-4 text-emerald-400"></i>
+                <span class="text-sm">Breathe</span>
+            </button>
+        </div>
+        
+    </div>
+    
+    <!-- Info Modal (hidden by default) -->
+    <div id="info-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="glass-strong rounded-2xl p-6 max-w-sm w-full">
+            <h3 class="text-lg font-semibold mb-3">About ClearllyFocus V3.01</h3>
+            <div class="space-y-3 text-sm text-white/70">
+                <p><strong class="text-violet-300">Noise Types:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                    <li><strong>Brown Noise:</strong> Deep, bassy (1/f²) for intense focus</li>
+                    <li><strong>Pink Noise:</strong> Balanced (1/f) for sustained reading</li>
+                    <li><strong>White Noise:</strong> Equal power for blocking chatter</li>
+                </ul>
+                <p><strong class="text-violet-300">Binaural Beats:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                    <li><strong>Alpha (10Hz):</strong> Relaxed focus, creative flow</li>
+                    <li><strong>Beta (15-20Hz):</strong> High-level concentration</li>
+                </ul>
+                <p class="text-xs text-white/50 mt-4">Use headphones for best binaural beats experience.</p>
+            </div>
+            <button id="close-info" class="mt-4 w-full py-2 bg-violet-500 rounded-lg hover:bg-violet-600 transition-colors">Got it</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CLEARLLYFOCUS V3.01 - FLOW STATE ENGINE
+        // ============================================
+        
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // ============================================
+        // WEB AUDIO API - NOISE GENERATORS
+        // ============================================
+        
+        class NoiseEngine {
+            constructor() {
+                this.audioContext = null;
+                this.masterGain = null;
+                this.noiseNode = null;
+                this.binauralNodes = [];
+                this.currentNoise = 'off';
+                this.volume = 0.5;
+                this.binauralEnabled = false;
+                this.betaMode = false;
+                this.isMuted = false;
+            }
+            
+            init() {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.masterGain = this.audioContext.createGain();
+                    this.masterGain.gain.value = this.volume;
+                    this.masterGain.connect(this.audioContext.destination);
+                }
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            }
+            
+            // Create White Noise (equal power per frequency)
+            createWhiteNoise() {
+                const bufferSize = 2 * this.audioContext.sampleRate;
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const output = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                const noise = this.audioContext.createBufferSource();
+                noise.buffer = buffer;
+                noise.loop = true;
+                return noise;
+            }
+            
+            // Create Pink Noise (1/f power density - equal power per octave)
+            createPinkNoise() {
+                const bufferSize = 2 * this.audioContext.sampleRate;
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const output = buffer.getChannelData(0);
+                
+                let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    b0 = 0.99886 * b0 + white * 0.0555179;
+                    b1 = 0.99332 * b1 + white * 0.0750759;
+                    b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856;
+                    b4 = 0.55000 * b4 + white * 0.5329522;
+                    b5 = -0.7616 * b5 - white * 0.0168980;
+                    output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                    output[i] *= 0.11; // Normalize
+                    b6 = white * 0.115926;
+                }
+                
+                const noise = this.audioContext.createBufferSource();
+                noise.buffer = buffer;
+                noise.loop = true;
+                return noise;
+            }
+            
+            // Create Brown Noise (1/f² power density - deep bassy)
+            createBrownNoise() {
+                const bufferSize = 2 * this.audioContext.sampleRate;
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const output = buffer.getChannelData(0);
+                
+                let lastOut = 0;
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    output[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = output[i];
+                    output[i] *= 3.5; // Boost gain
+                }
+                
+                const noise = this.audioContext.createBufferSource();
+                noise.buffer = buffer;
+                noise.loop = true;
+                return noise;
+            }
+            
+            // Create Binaural Beats
+            createBinauralBeats() {
+                this.cleanupBinaural();
+                
+                // Carrier frequency (base tone)
+                const carrierFreq = 200;
+                
+                // Beat frequency (Alpha = 10Hz, Beta = 15-20Hz)
+                const beatFreq = this.betaMode ? 17.5 : 10;
+                
+                // Left ear: carrier frequency
+                const leftOsc = this.audioContext.createOscillator();
+                leftOsc.frequency.value = carrierFreq;
+                const leftGain = this.audioContext.createGain();
+                leftGain.gain.value = 0.15;
+                
+                // Right ear: carrier + beat frequency
+                const rightOsc = this.audioContext.createOscillator();
+                rightOsc.frequency.value = carrierFreq + beatFreq;
+                const rightGain = this.audioContext.createGain();
+                rightGain.gain.value = 0.15;
+                
+                // Create stereo panner
+                const merger = this.audioContext.createChannelMerger(2);
+                
+                leftOsc.connect(leftGain);
+                rightOsc.connect(rightGain);
+                leftGain.connect(merger, 0, 0);
+                rightGain.connect(merger, 0, 1);
+                merger.connect(this.masterGain);
+                
+                leftOsc.start();
+                rightOsc.start();
+                
+                this.binauralNodes = [leftOsc, rightOsc, leftGain, rightGain, merger];
+            }
+            
+            cleanupBinaural() {
+                this.binauralNodes.forEach(node => {
+                    try {
+                        if (node.stop) node.stop();
+                        node.disconnect();
+                    } catch (e) {}
+                });
+                this.binauralNodes = [];
+            }
+            
+            setNoise(type) {
+                this.init();
+                this.currentNoise = type;
+                
+                // Cleanup existing noise
+                if (this.noiseNode) {
+                    try {
+                        this.noiseNode.stop();
+                        this.noiseNode.disconnect();
+                    } catch (e) {}
+                    this.noiseNode = null;
+                }
+                
+                if (type === 'off') return;
+                
+                // Create new noise
+                switch(type) {
+                    case 'white':
+                        this.noiseNode = this.createWhiteNoise();
+                        break;
+                    case 'pink':
+                        this.noiseNode = this.createPinkNoise();
+                        break;
+                    case 'brown':
+                        this.noiseNode = this.createBrownNoise();
+                        break;
+                }
+                
+                if (this.noiseNode) {
+                    // Add lowpass filter for smoother sound
+                    const filter = this.audioContext.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 8000;
+                    
+                    this.noiseNode.connect(filter);
+                    filter.connect(this.masterGain);
+                    this.noiseNode.start();
+                }
+            }
+            
+            setVolume(value) {
+                this.volume = value;
+                if (this.masterGain) {
+                    this.masterGain.gain.value = this.isMuted ? 0 : value;
+                }
+            }
+            
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                if (this.masterGain) {
+                    this.masterGain.gain.value = this.isMuted ? 0 : this.volume;
+                }
+                return this.isMuted;
+            }
+            
+            setBinaural(enabled) {
+                this.binauralEnabled = enabled;
+                if (enabled) {
+                    this.createBinauralBeats();
+                } else {
+                    this.cleanupBinaural();
+                }
+            }
+            
+            setBetaMode(enabled) {
+                this.betaMode = enabled;
+                if (this.binauralEnabled) {
+                    this.createBinauralBeats(); // Recreate with new frequency
+                }
+            }
+        }
+        
+        // ============================================
+        // POMODORO TIMER
+        // ============================================
+        
+        class PomodoroTimer {
+            constructor(onTick, onComplete) {
+                this.minutes = 25;
+                this.breakMinutes = 5;
+                this.seconds = 0;
+                this.totalSeconds = 25 * 60;
+                this.remainingSeconds = 25 * 60;
+                this.isRunning = false;
+                this.isBreak = false;
+                this.interval = null;
+                this.onTick = onTick;
+                this.onComplete = onComplete;
+            }
+            
+            start() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.interval = setInterval(() => this.tick(), 1000);
+                }
+            }
+            
+            pause() {
+                this.isRunning = false;
+                clearInterval(this.interval);
+            }
+            
+            reset() {
+                this.pause();
+                this.isBreak = false;
+                this.remainingSeconds = this.minutes * 60;
+                this.totalSeconds = this.minutes * 60;
+                this.onTick(this.getDisplayTime(), this.getProgress());
+            }
+            
+            tick() {
+                if (this.remainingSeconds > 0) {
+                    this.remainingSeconds--;
+                    this.onTick(this.getDisplayTime(), this.getProgress());
+                } else {
+                    this.complete();
+                }
+            }
+            
+            complete() {
+                this.pause();
+                this.onComplete(this.isBreak);
+                
+                // Switch between focus and break
+                this.isBreak = !this.isBreak;
+                this.remainingSeconds = (this.isBreak ? this.breakMinutes : this.minutes) * 60;
+                this.totalSeconds = this.remainingSeconds;
+                this.onTick(this.getDisplayTime(), this.getProgress());
+            }
+            
+            getDisplayTime() {
+                const mins = Math.floor(this.remainingSeconds / 60);
+                const secs = this.remainingSeconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            getProgress() {
+                return this.remainingSeconds / this.totalSeconds;
+            }
+            
+            setDuration(focusMinutes, breakMins) {
+                this.minutes = focusMinutes;
+                this.breakMinutes = breakMins;
+                if (!this.isRunning) {
+                    this.remainingSeconds = this.minutes * 60;
+                    this.totalSeconds = this.minutes * 60;
+                    this.onTick(this.getDisplayTime(), this.getProgress());
+                }
+            }
+        }
+        
+        // ============================================
+        // FLOW STREAK TRACKER
+        // ============================================
+        
+        class FlowStreak {
+            constructor() {
+                this.streak = 0;
+                this.totalFocusMinutes = parseInt(localStorage.getItem('totalFocusMinutes') || '0');
+                this.lastActive = Date.now();
+                this.isTracking = false;
+                this.checkInterval = null;
+            }
+            
+            start() {
+                if (!this.isTracking) {
+                    this.isTracking = true;
+                    this.lastActive = Date.now();
+                    this.checkInterval = setInterval(() => this.checkActivity(), 60000); // Check every minute
+                }
+            }
+            
+            stop() {
+                this.isTracking = false;
+                clearInterval(this.checkInterval);
+                this.streak = 0;
+            }
+            
+            checkActivity() {
+                // Only increment if page is visible
+                if (!document.hidden) {
+                    this.streak++;
+                    this.totalFocusMinutes++;
+                    localStorage.setItem('totalFocusMinutes', this.totalFocusMinutes.toString());
+                    this.updateDisplay();
+                }
+            }
+            
+            updateDisplay() {
+                const streakEl = document.getElementById('streak-display');
+                const totalEl = document.getElementById('total-focus-display');
+                if (streakEl) streakEl.textContent = this.streak;
+                if (totalEl) totalEl.textContent = this.totalFocusMinutes;
+            }
+            
+            reset() {
+                this.streak = 0;
+                this.updateDisplay();
+            }
+        }
+        
+        // ============================================
+        // BOX BREATHING ANIMATION
+        // ============================================
+        
+        class BoxBreathing {
+            constructor() {
+                this.isActive = false;
+                this.phase = 0; // 0: inhale, 1: hold, 2: exhale, 3: hold
+                this.inhaleTime = 4000;
+                this.holdTime1 = 7000;
+                this.exhaleTime = 8000;
+                this.holdTime2 = 0; // No second hold in 4-7-8
+                this.timeout = null;
+            }
+            
+            start() {
+                this.isActive = true;
+                this.cycle();
+            }
+            
+            stop() {
+                this.isActive = false;
+                clearTimeout(this.timeout);
+            }
+            
+            cycle() {
+                if (!this.isActive) return;
+                
+                const breathText = document.getElementById('breath-text');
+                
+                // Inhale (4s)
+                if (breathText) breathText.textContent = 'Inhale...';
+                this.timeout = setTimeout(() => {
+                    if (!this.isActive) return;
+                    
+                    // Hold (7s)
+                    if (breathText) breathText.textContent = 'Hold...';
+                    this.timeout = setTimeout(() => {
+                        if (!this.isActive) return;
+                        
+                        // Exhale (8s)
+                        if (breathText) breathText.textContent = 'Exhale...';
+                        this.timeout = setTimeout(() => {
+                            if (this.isActive) this.cycle();
+                        }, this.exhaleTime);
+                    }, this.holdTime1);
+                }, this.inhaleTime);
+            }
+        }
+        
+        // ============================================
+        // APP INITIALIZATION
+        // ============================================
+        
+        const noiseEngine = new NoiseEngine();
+        const flowStreak = new FlowStreak();
+        const boxBreathing = new BoxBreathing();
+        
+        const timer = new PomodoroTimer(
+            (time, progress) => {
+                document.getElementById('timer-display').textContent = time;
+                const circle = document.getElementById('timer-progress');
+                const circumference = 339.292;
+                circle.style.strokeDashoffset = circumference * (1 - progress);
+            },
+            (wasBreak) => {
+                // Timer completed
+                if (!wasBreak) {
+                    // Focus session completed
+                    flowStreak.stop();
+                }
+                
+                // Play notification sound
+                try {
+                    const audio = new AudioContext();
+                    const osc = audio.createOscillator();
+                    const gain = audio.createGain();
+                    osc.connect(gain);
+                    gain.connect(audio.destination);
+                    osc.frequency.value = wasBreak ? 440 : 880;
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.01, audio.currentTime + 0.5);
+                    osc.stop(audio.currentTime + 0.5);
+                } catch (e) {}
+                
+                // Update mode display
+                document.getElementById('timer-mode').textContent = wasBreak ? 'Focus' : 'Break';
+            }
+        );
+        
+        // Initialize displays
+        flowStreak.updateDisplay();
+        
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        
+        // Timer Controls
+        document.getElementById('timer-toggle').addEventListener('click', () => {
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const taskInput = document.getElementById('task-input');
+            const taskDisplay = document.getElementById('task-display');
+            const taskText = document.getElementById('task-text');
+            
+            if (timer.isRunning) {
+                timer.pause();
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                flowStreak.stop();
+                document.getElementById('timer-container').classList.remove('timer-active');
+            } else {
+                // Initialize audio on first user interaction
+                noiseEngine.init();
+                
+                timer.start();
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+                flowStreak.start();
+                document.getElementById('timer-container').classList.add('timer-active');
+                
+                // Lock in the task
+                if (taskInput.value.trim()) {
+                    taskText.textContent = taskInput.value.trim();
+                    taskInput.classList.add('hidden');
+                    taskDisplay.classList.remove('hidden');
+                }
+            }
+        });
+        
+        document.getElementById('timer-reset').addEventListener('click', () => {
+            timer.reset();
+            document.getElementById('play-icon').classList.remove('hidden');
+            document.getElementById('pause-icon').classList.add('hidden');
+            flowStreak.stop();
+            flowStreak.reset();
+            document.getElementById('timer-container').classList.remove('timer-active');
+            document.getElementById('timer-mode').textContent = 'Focus';
+            
+            // Unlock task
+            document.getElementById('task-input').classList.remove('hidden');
+            document.getElementById('task-display').classList.add('hidden');
+        });
+        
+        // Timer Presets
+        document.querySelectorAll('.timer-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.timer-preset').forEach(b => b.classList.remove('active', 'bg-violet-500'));
+                btn.classList.add('active');
+                const mins = parseInt(btn.dataset.minutes);
+                const breakMins = parseInt(btn.dataset.break);
+                timer.setDuration(mins, breakMins);
+            });
+        });
+        
+        // Noise Type Buttons
+        document.querySelectorAll('.noise-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.noise-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                noiseEngine.setNoise(btn.dataset.noise);
+            });
+        });
+        
+        // Set default noise button
+        document.querySelector('[data-noise="off"]').classList.add('active');
+        
+        // Volume Slider
+        document.getElementById('volume-slider').addEventListener('input', (e) => {
+            noiseEngine.setVolume(e.target.value / 100);
+        });
+        
+        // Mute Toggle
+        document.getElementById('mute-toggle').addEventListener('click', () => {
+            const isMuted = noiseEngine.toggleMute();
+            document.getElementById('mute-icon').classList.toggle('hidden', !isMuted);
+            document.getElementById('unmute-icon').classList.toggle('hidden', isMuted);
+        });
+        
+        // Binaural Toggle
+        document.getElementById('binaural-toggle').addEventListener('change', (e) => {
+            noiseEngine.setBinaural(e.target.checked);
+            if (e.target.checked) {
+                document.getElementById('beta-toggle').checked = false;
+                noiseEngine.setBetaMode(false);
+            }
+        });
+        
+        // Beta Toggle
+        document.getElementById('beta-toggle').addEventListener('change', (e) => {
+            noiseEngine.setBetaMode(e.target.checked);
+            if (e.target.checked) {
+                document.getElementById('binaural-toggle').checked = false;
+                noiseEngine.setBinaural(true);
+            } else {
+                noiseEngine.setBinaural(false);
+            }
+        });
+        
+        // Zen Mode
+        let zenMode = false;
+        document.getElementById('zen-toggle').addEventListener('click', () => {
+            zenMode = !zenMode;
+            document.body.classList.toggle('zen-mode', zenMode);
+            const btn = document.getElementById('zen-toggle');
+            btn.innerHTML = zenMode 
+                ? '<i data-lucide="eye" class="w-4 h-4"></i><span class="text-sm">Exit Zen</span>'
+                : '<i data-lucide="eye-off" class="w-4 h-4"></i><span class="text-sm">Zen Mode</span>';
+            lucide.createIcons();
+        });
+        
+        // Breathing Toggle
+        document.getElementById('breathe-toggle').addEventListener('click', () => {
+            const section = document.getElementById('breathing-section');
+            const isHidden = section.classList.contains('hidden');
+            
+            if (isHidden) {
+                section.classList.remove('hidden');
+                boxBreathing.start();
+            } else {
+                section.classList.add('hidden');
+                boxBreathing.stop();
+            }
+        });
+        
+        document.getElementById('stop-breathing').addEventListener('click', () => {
+            document.getElementById('breathing-section').classList.add('hidden');
+            boxBreathing.stop();
+        });
+        
+        // Page Visibility API for streak tracking
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && timer.isRunning) {
+                // Page hidden - pause streak but keep timer running
+            }
+        });
+        
+        // Create background particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+        
+        // Load saved task
+        const savedTask = localStorage.getItem('currentTask');
+        if (savedTask) {
+            document.getElementById('task-input').value = savedTask;
+        }
+        
+        // Save task on input
+        document.getElementById('task-input').addEventListener('input', (e) => {
+            localStorage.setItem('currentTask', e.target.value);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                document.getElementById('timer-toggle').click();
+            }
+            if (e.code === 'KeyZ' && e.ctrlKey) {
+                e.preventDefault();
+                document.getElementById('zen-toggle').click();
+            }
+        });
+        
+        // Info modal (can be triggered by adding a button later)
+        // document.getElementById('close-info').addEventListener('click', () => {
+        //     document.getElementById('info-modal').classList.add('hidden');
+        //     document.getElementById('info-modal').classList.remove('flex');
+        // });
+        
+        console.log('ClearllyFocus V3.01 - Flow State Engine initialized');
+        console.log('Features: Web Audio API noise generation, Binaural Beats, Pomodoro Timer, Flow Streak Tracking');
+    </script>
+</body>
+</html>
