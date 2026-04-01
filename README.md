@@ -37,4 +37,4 @@ Forget MP3 loops. ClearllyFocus generates sound mathematically:
 
 1. **Clone the repo:**
    ```bash
-   git clone [https://github.com/meuor/ClearllyFocus.git](https://github.com/YOUR_USERNAME/ClearllyFocus.git)
+   git clone [https://github.com/meuor/ClearllyFocus.git](https://github.com/meuor/ClearllyFocus.git)
